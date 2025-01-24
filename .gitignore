@@ -1,0 +1,40 @@
+# Compressed files
+*.zip
+
+# IDE settings
+*.vscode/
+*.codebuddy/
+
+# Project specific directories
+TAM/
+ytclips/
+Classified_Clips/*/
+!Classified_Clips/*.py
+
+# Video files
+*.mp4
+*.avi
+*.mov
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+
+#model files
+*.pth 
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
