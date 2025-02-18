@@ -8,8 +8,6 @@
 # Project specific directories
 TAM/
 ytclips/
-Classified_Clips/*/
-!Classified_Clips/*.py
 
 # Video files
 *.mp4
@@ -29,6 +27,8 @@ ENV/
 
 #model files
 *.pth 
+*.jpg
+*.png
 
 # OS generated files
 .DS_Store

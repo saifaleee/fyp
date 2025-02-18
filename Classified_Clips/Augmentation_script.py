@@ -1,23 +1,6 @@
 import os
 import cv2
 
-# Define folder paths
-input_folders = {
-    "left": "Left_Kicks",
-    "right": "Right_Kicks",
-    "center": "Center_Kicks",
-}
-output_folders = {
-    "left": "right_augmented",
-    "right": "left_augmented",
-    "center": "center_augmented",
-}
-
-# Ensure output folders exist
-for folder in output_folders.values():
-    os.makedirs(folder, exist_ok=True)
-
-# Function to augment videos by mirroring
 def augment_video(input_path, output_path):
     try:
         # Open the video file
@@ -29,7 +12,7 @@ def augment_video(input_path, output_path):
         fps = cap.get(cv2.CAP_PROP_FPS)
         
         # Define the codec and create VideoWriter object
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
         
         while True:
@@ -37,7 +20,7 @@ def augment_video(input_path, output_path):
             if not ret:
                 break
             
-            # Flip the frame horizontally
+            # Flip the frame horizontally (mirror across x-axis)
             flipped_frame = cv2.flip(frame, 1)
             
             # Write the flipped frame to the output video
@@ -51,17 +34,38 @@ def augment_video(input_path, output_path):
     except Exception as e:
         print(f"Error processing {input_path}: {e}")
 
-# Process each folder
-for category, input_folder in input_folders.items():
-    output_folder = output_folders[category]
+def augment_clips(results_folder):
+    # Define the input and output folder mappings
+    folder_mappings = {
+        "Processed_Left_Kicks": "Processed_aug_Right_Kicks",
+        "Processed_Right_Kicks": "Processed_aug_Left_Kicks",
+        "Processed_Center_Kicks": "Processed_aug_Center_Kicks"
+    }
     
-    for video_file in os.listdir(input_folder):
-        input_path = os.path.join(input_folder, video_file)
-        # Ensure it's a video file (you can refine this filter)
-        if os.path.isfile(input_path) and video_file.lower().endswith(('.mp4', '.mov', '.avi')):
-            # Define the output file path
-            output_path = os.path.join(output_folder, video_file)
-            # Augment and save the video
-            augment_video(input_path, output_path)
+    # Process each folder
+    for input_folder_name, output_folder_name in folder_mappings.items():
+        # Create full paths
+        input_folder = os.path.join(results_folder, input_folder_name)
+        output_folder = os.path.join(results_folder, output_folder_name)
+        
+        # Skip if input folder doesn't exist
+        if not os.path.exists(input_folder):
+            print(f"Skipping {input_folder_name} - folder not found")
+            continue
+        
+        # Create output folder
+        os.makedirs(output_folder, exist_ok=True)
+        print(f"Processing {input_folder_name} -> {output_folder_name}")
+        
+        # Process each video in the input folder
+        for video_file in os.listdir(input_folder):
+            if video_file.endswith(('.mp4', '.avi', '.mov')):
+                input_path = os.path.join(input_folder, video_file)
+                output_path = os.path.join(output_folder, video_file)
+                augment_video(input_path, output_path)
 
-print("All videos processed.")
+if __name__ == "__main__":
+    # Path to the Results folder
+    results_folder = "Classified_Clips/Results"
+    augment_clips(results_folder)
+    print("Augmentation complete!")

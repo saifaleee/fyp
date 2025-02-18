@@ -1,57 +1,54 @@
-import os
 import cv2
+import os
 
-def delete_file_prompt(file_path):
-    while True:
-        response = input(f"Do you want to delete '{os.path.basename(file_path)}'? (y/n): ").lower()
-        if response == 'y':
-            try:
-                os.remove(file_path)
-                print(f"Deleted: {file_path}")
-                return True
-            except Exception as e:
-                print(f"Error deleting file: {e}")
-                return False
-        elif response == 'n':
-            print(f"Keeping: {file_path}")
-            return False
-        else:
-            print("Please enter 'y' or 'n'")
-
-def check_videos_for_26_frames(video_folder):
-    # Ensure the folder exists
-    if not os.path.exists(video_folder):
-        print(f"Error: The folder '{video_folder}' does not exist.")
-        return
+def check_video_frames(folder_path):
+    """
+    Check the number of frames in each video in the specified folder.
+    Returns True if all videos have sufficient frames (≥26), False otherwise.
+    """
+    if not os.path.exists(folder_path):
+        print(f"Error: Folder {folder_path} does not exist")
+        return False
     
-    # List all video files in the folder
-    video_files = [f for f in os.listdir(video_folder) if f.endswith(('.mp4', '.avi', '.mov'))]
-    if not video_files:
-        print(f"No video files found in '{video_folder}'.")
-        return
+    videos = [f for f in os.listdir(folder_path) if f.endswith(('.mp4', '.avi', '.mov'))]
+    if not videos:
+        print(f"No videos found in {folder_path}")
+        return False
     
-    print(f"Checking videos in folder: {video_folder}")
+    print(f"\nChecking videos in {folder_path}:")
+    print("-" * 50)
+    print(f"{'Video Name':<30} {'Total Frames':<15} {'Status':<10}")
+    print("-" * 50)
     
-    # Iterate through all video files and check their frame count
-    for video_file in video_files:
-        video_path = os.path.join(video_folder, video_file)
+    all_valid = True
+    for video in videos:
+        video_path = os.path.join(folder_path, video)
         cap = cv2.VideoCapture(video_path)
+        
         if not cap.isOpened():
-            print(f"Error: Unable to open video {video_file}. Skipping...")
+            print(f"{video:<30} {'Error':<15} {'Failed':<10}")
+            all_valid = False
             continue
         
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))  # Get total frame count
-        cap.release()  # Release the video file
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap.release()
         
-        if total_frames == 26:
-            print(f"Video '{video_file}' has exactly 26 frames.")
+        if total_frames < 26:
+            status = "Too few"
+            all_valid = False
         else:
-            print(f"Video '{video_file}' does NOT have 26 frames (found {total_frames} frames).")
-            if total_frames < 26:
-                print(f"Warning: '{video_file}' has fewer than 26 frames!")
-                delete_file_prompt(video_path)
+            status = "OK"
+            
+        print(f"{video:<30} {total_frames:<15} {status:<10}")
+    
+    print("-" * 50)
+    if all_valid:
+        print("All videos have sufficient frames (≥26)")
+    else:
+        print("WARNING: Some videos have fewer than 26 frames!")
+    
+    return all_valid
 
-# Input: Folder path containing videos
-video_folder = "Left_Kicks"
-
-check_videos_for_26_frames(video_folder)
+if __name__ == "__main__":
+    folder_path = "path/to/your/video/folder"
+    check_video_frames(folder_path)
