@@ -1,12 +1,14 @@
 import cv2
 import numpy as np
+from GoalkeeperAnimation import GoalkeeperAnimator
 
 class GoalVisualizer:
+
     def __init__(self):
         """
         Initialize the goal visualizer
         """
-        pass
+        self.goalkeeper = GoalkeeperAnimator(animations_folder="Fbx Animations")
 
     def cieluv(self, img, target):
         """
@@ -32,7 +34,7 @@ class GoalVisualizer:
         """
         # Define goalpost color and threshold
         goalpost_color = (220, 220, 220)
-        goalpost_color_threshold = 5
+        goalpost_color_threshold = 3
 
         # Detect goalpost color
         goalpost = self.cieluv(frame, goalpost_color) < goalpost_color_threshold
@@ -91,64 +93,65 @@ class GoalVisualizer:
 
         return frame
 
-def process_video(video_path, output_path, left_label=None, center_label=None, right_label=None, delay=100):
+def process_video(video_path, output_path, prediction, delay=100):
     """
-    Process the input video and create visualization
+    Process video with goalkeeper animation based on prediction
     Args:
-        video_path: Path to input video
-        output_path: Path to save output video
-        left_label: Label for left region
-        center_label: Label for center region
-        right_label: Label for right region
-        delay: Delay between frames in milliseconds (default: 100ms)
+        prediction: 'left', 'center', or 'right'
     """
-    # Initialize goal visualizer
     visualizer = GoalVisualizer()
-
-    # Open video file
+    
+    # Get total frames in the video
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print(f"Error: Could not open video file {video_path}")
         return
-
-    # Get video properties
+        
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
-
-    # Create video writer
+    
+    # Set animation with total frames, 50% speed, and 25% lower position
+    visualizer.goalkeeper.set_animation(
+        prediction, 
+        total_frames,
+        animation_speed=0.50,  # Play only 50% of the animation
+        y_offset_percentage=0.3  # Position 25% lower
+    )
+    
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-
+    
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
-
+            
         # Detect goal and create visualization
         goal_box = visualizer.detect_goal(frame)
         if goal_box is not None:
-            frame = visualizer.divide_goal_area(frame, goal_box, left_label, center_label, right_label)
-
-        # Write frame to output video
+            # Add goal visualization
+            frame = visualizer.divide_goal_area(frame, goal_box)
+            # Overlay goalkeeper animation
+            frame = visualizer.goalkeeper.overlay_frame(frame, goal_box)
+            
         out.write(frame)
-
-        # Display frame with delay
         cv2.imshow('Goal Analysis', frame)
-
-        # Wait for 'delay' milliseconds, break if 'q' is pressed
+        
         if cv2.waitKey(delay) & 0xFF == ord('q'):
             break
-
-    # Clean up
+    
     cap.release()
     out.release()
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    video_path = "020.mp4"
-    output_path = "020_viz.mp4"
-
-    # Process video with labels
-    process_video(video_path, output_path, left_label="10%", center_label="20%", right_label="70%", delay=100)
-00
+    # Test with each direction
+    videos = [
+        ("020.mp4", "020_viz.mp4", "right")
+    ]
+    
+    for video_path, output_path, prediction in videos:
+        print(f"Processing {video_path} with {prediction} prediction...")
+        process_video(video_path, output_path, prediction, delay=150)

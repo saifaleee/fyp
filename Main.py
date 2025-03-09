@@ -12,29 +12,29 @@ def main():
         "center": "Classified_Clips/Center_Kicks"
     }
     
-    # Step 1.5: Check video frames before processing
-    print("Step 1: Checking video frames...")
-    for folder_type, folder_path in input_folders.items():
-        if os.path.exists(folder_path):
-            print(f"\nChecking {folder_type} kicks...")
-            check_video_frames(folder_path)
+    # # Step 1.5: Check video frames before processing
+    # print("Step 1: Checking video frames...")
+    # for folder_type, folder_path in input_folders.items():
+    #     if os.path.exists(folder_path):
+    #         print(f"\nChecking {folder_type} kicks...")
+    #         check_video_frames(folder_path)
     
-    # Confirm with user before proceeding
-    user_input = input("\nDo you want to proceed with processing the videos? (y/n): ")
-    if user_input.lower() != 'y':
-        print("Processing cancelled.")
-        return
+    # # Confirm with user before proceeding
+    # user_input = input("\nDo you want to proceed with processing the videos? (y/n): ")
+    # if user_input.lower() != 'y':
+    #     print("Processing cancelled.")
+    #     return
     
-    # Step 2: Clip the videos into 26 frames
-    print("\nStep 2: Clipping videos to 26 frames...")
-    for folder_type, folder_path in input_folders.items():
-        if os.path.exists(folder_path):
-            clip26frames(folder_path)
+    # # Step 2: Clip the videos into 26 frames
+    # print("\nStep 2: Clipping videos to 26 frames...")
+    # for folder_type, folder_path in input_folders.items():
+    #     if os.path.exists(folder_path):
+    #         clip26frames(folder_path)
     
-    # Step 3: Augment the clipped videos
-    print("\nStep 3: Augmenting the processed videos...")
+    # # Step 3: Augment the clipped videos
+    # print("\nStep 3: Augmenting the processed videos...")
     results_folder = "Classified_Clips/Results"
-    augment_clips(results_folder)
+    # augment_clips(results_folder)
     
     # Step 4: Process all videos with MMPose
     print("\nStep 4: Processing videos with MMPose...")
