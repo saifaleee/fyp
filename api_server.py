@@ -99,14 +99,31 @@ def process_video_task(task_id, video_path, base_name):
         processing_status[task_id]['output_folder'] = output_folder
         processing_status[task_id]['completed_at'] = time.time()
         
-        # Find the output files
-        visualization_file = os.path.join(output_folder, f"{base_name}_visualization.mp4")
-        keypoints_file = os.path.join(output_folder, f"{base_name}_keypoints.mp4")
+        # Find the output files - SEARCH MORE THOROUGHLY
+        visualization_file = None
+        keypoints_file = None
         
-        if not os.path.exists(visualization_file):
-            visualization_file = None
-        if not os.path.exists(keypoints_file):
-            keypoints_file = None
+        # Look for files with these patterns
+        for root, dirs, files in os.walk(output_folder):
+            for file in files:
+                if '_visualization.mp4' in file:
+                    visualization_file = os.path.join(root, file)
+                elif '_keypoints.mp4' in file:
+                    keypoints_file = os.path.join(root, file)
+        
+        # If not found in expected location, search the entire output directory
+        if not visualization_file or not keypoints_file:
+            print(f"Warning: Files not found in expected location. Searching entire output directory...")
+            for root, dirs, files in os.walk(PROCESSED_FOLDER):
+                for file in files:
+                    if '_visualization.mp4' in file and not visualization_file:
+                        visualization_file = os.path.join(root, file)
+                    elif '_keypoints.mp4' in file and not keypoints_file:
+                        keypoints_file = os.path.join(root, file)
+        
+        # Log what we found
+        print(f"Visualization file: {visualization_file}")
+        print(f"Keypoints file: {keypoints_file}")
         
         processing_status[task_id]['visualization_file'] = visualization_file
         processing_status[task_id]['keypoints_file'] = keypoints_file
@@ -142,8 +159,12 @@ def download_file(task_id, file_type):
         file_path = task.get('keypoints_file')
         if not file_path or not os.path.exists(file_path):
             return jsonify({'error': 'Keypoints file not found'}), 404
+    elif file_type == 'processed':
+        file_path = task.get('processed_file')
+        if not file_path or not os.path.exists(file_path):
+            return jsonify({'error': 'Processed file not found'}), 404
     else:
-        return jsonify({'error': 'Invalid file type. Use "visualization" or "keypoints"'}), 400
+        return jsonify({'error': 'Invalid file type. Use "visualization", "keypoints", or "processed"'}), 400
     
     # Return the file
     return send_file(file_path, as_attachment=True)
@@ -167,5 +188,5 @@ def cleanup(task_id):
     return jsonify({'message': 'Cleanup completed'})
 
 if __name__ == '__main__':
-    # Run API server
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    # Run API server on all interfaces
+    app.run(host='0.0.0.0', port=5000, debug=False)
